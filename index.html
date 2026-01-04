@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生倒计时 - 可视化生命时间</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-blue: #0f4c75;
+            --accent-teal: #00adb5;
+            --accent-gold: #ffd369;
+            --accent-green: #4CAF50;
+            --accent-orange: #FF9800;
+            --text-light: #eeeeee;
+            --text-dim: #b0b0b0;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: var(--primary-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 第一屏 - 输入部分 */
+        #input-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #result-screen {
+            display: none;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            max-width: 800px;
+            margin: 0 auto 40px;
+            font-weight: 300;
+        }
+        
+        .input-section {
+            background-color: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .input-field {
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--accent-teal);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--accent-blue);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-family: 'Noto Sans SC', sans-serif;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.2);
+        }
+        
+        .input-note {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .start-btn {
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-blue));
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 20px;
+            display: inline-block;
+            width: 100%;
+            letter-spacing: 1px;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 173, 181, 0.4);
+        }
+        
+        /* 第二屏 - 结果部分 */
+        header {
+            text-align: center;
+            padding: 40px 20px 10px;
+            position: relative;
+        }
+        
+        /* 合并的生命总体进度和台历倒计时 */
+        .combined-section {
+            background-color: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: var(--accent-teal);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            justify-content: center;
+        }
+        
+        /* 生命总体进度 */
+        .life-progress-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .progress-age {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .progress-percent {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+        
+        .progress-bar-large {
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            position: relative;
+            border: 1px solid rgba(0, 173, 181, 0.3);
+        }
+        
+        .progress-fill-large {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-gold));
+            border-radius: 12px;
+            width: 50%;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill-large::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        
+        /* 台历卡片 */
+        .calendar-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .calendar-card {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px 15px;
+            min-width: 110px;
+            text-align: center;
+            position: relative;
+            border: 1px solid rgba(0, 173, 181, 0.3);
+            transition: var(--transition);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .calendar-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-teal);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .calendar-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            line-height: 1;
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .calendar-label {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .calendar-separator {
+            color: var(--accent-teal);
+            font-size: 2rem;
+            font-weight: 300;
+            margin: 0 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .seconds-card {
+            background-color: rgba(15, 76, 117, 0.4);
+            border-color: var(--accent-teal);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes flip {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
+        }
+        
+        .flipping {
+            animation: flip 0.5s ease-in-out;
+        }
+        
+        /* 剩余时间换算部分 */
+        .remaining-time-conversion {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .conversion-card {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 25px 20px;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            border: 1px solid rgba(0, 173, 181, 0.3);
+            transition: var(--transition);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+        }
+        
+        .conversion-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-teal);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .conversion-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            line-height: 1;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .conversion-label {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .conversion-subtitle {
+            font-size: 1rem;
+            color: var(--text-dim);
+            margin-top: 10px;
+        }
+        
+        /* 时间分解部分 - 扩展版 */
+        .time-breakdown-section {
+            background-color: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .time-breakdown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .time-breakdown-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .time-breakdown-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .breakdown-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(0, 173, 181, 0.2);
+            transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .breakdown-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-teal);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .breakdown-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            line-height: 1;
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .breakdown-label {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+        
+        .breakdown-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: auto;
+        }
+        
+        .breakdown-icon {
+            font-size: 1.8rem;
+            color: var(--accent-teal);
+            margin-bottom: 10px;
+        }
+        
+        /* 行动建议部分 */
+        .action-section {
+            background-color: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-quote {
+            font-style: italic;
+            color: var(--accent-gold);
+            padding: 15px;
+            border-left: 3px solid var(--accent-teal);
+            background-color: rgba(15, 76, 117, 0.2);
+            margin: 0 auto 30px;
+            max-width: 700px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .action-card {
+            background-color: rgba(15, 76, 117, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            transition: var(--transition);
+            border-left: 4px solid var(--accent-teal);
+        }
+        
+        .action-card:hover {
+            transform: translateY(-5px);
+            background-color: rgba(15, 76, 117, 0.5);
+            border-left-color: var(--accent-gold);
+        }
+        
+        /* 亲情陪伴模块样式 */
+        .family-section {
+            margin: 40px 0;
+            animation: fadeIn 1s ease;
+        }
+        
+        .family-breakdown-card {
+            background-color: rgba(0, 173, 181, 0.05) !important;
+            border-left: 4px solid var(--accent-teal) !important;
+            position: relative;
+        }
+        
+        .family-breakdown-card::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent-teal);
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+        
+        .family-breakdown-card .breakdown-icon {
+            color: var(--accent-teal);
+        }
+        
+        .family-breakdown-card .breakdown-value {
+            color: var(--accent-teal);
+            font-weight: 800;
+        }
+        
+        .family-empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            background-color: rgba(0, 173, 181, 0.1);
+            border-radius: 10px;
+            border: 2px dashed var(--accent-teal);
+        }
+        
+        .family-empty-state-icon {
+            font-size: 3rem;
+            color: var(--accent-teal);
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+        
+        /* 亲情行动建议卡片 */
+        .family-action-card {
+            background-color: rgba(0, 173, 181, 0.15) !important;
+            border-left: 4px solid var(--accent-teal) !important;
+        }
+        
+        .family-action-card .action-icon {
+            color: var(--accent-teal);
+        }
+        
+        .action-icon {
+            font-size: 1.8rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+        }
+        
+        .action-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-light);
+        }
+        
+        .action-desc {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            display: inline-block;
+            background-color: transparent;
+            color: var(--accent-teal);
+            border: 1px solid var(--accent-teal);
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--accent-teal);
+            color: var(--primary-dark);
+        }
+        
+        /* 重置按钮 */
+        .reset-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 20px;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(to right, var(--accent-orange), #FFB74D);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(255, 152, 0, 0.4);
+            background: linear-gradient(to right, #FFB74D, var(--accent-orange));
+        }
+        
+        /* 脚注 */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 20px;
+            color: var(--text-dim);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+        
+        .footer-note {
+            max-width: 800px;
+            margin: 20px auto;
+            line-height: 1.8;
+        }
+        
+        .highlight {
+            color: var(--accent-gold);
+        }
+        
+        .warning-box {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: rgba(255, 152, 0, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-orange);
+        }
+        
+        /* 家庭输入区域样式 */
+        #family-input-section {
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-teal);
+        }
+        
+        .calculate-family-btn {
+            background: linear-gradient(to right, var(--accent-teal), var(--accent-blue));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 20px;
+            display: inline-block;
+            width: 100%;
+            letter-spacing: 1px;
+        }
+        
+        .calculate-family-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 173, 181, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .input-section {
+                padding: 30px 20px;
+            }
+            
+            .calendar-card {
+                min-width: 90px;
+                padding: 15px 10px;
+            }
+            
+            .calendar-value {
+                font-size: 2rem;
+                min-height: 50px;
+            }
+            
+            .calendar-label {
+                font-size: 1rem;
+            }
+            
+            .calendar-separator {
+                font-size: 1.5rem;
+            }
+            
+            .conversion-card {
+                min-width: 150px;
+                padding: 20px 15px;
+            }
+            
+            .conversion-value {
+                font-size: 2.2rem;
+            }
+            
+            .conversion-label {
+                font-size: 1.1rem;
+            }
+            
+            .combined-section, .time-breakdown-section, .action-section {
+                padding: 20px;
+            }
+            
+            .time-breakdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .remaining-time-conversion {
+                gap: 20px;
+            }
+            
+            #family-input-section {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .calendar-cards {
+                gap: 10px;
+            }
+            
+            .calendar-card {
+                min-width: 70px;
+                padding: 12px 8px;
+            }
+            
+            .calendar-value {
+                font-size: 1.6rem;
+                min-height: 40px;
+            }
+            
+            .calendar-label {
+                font-size: 0.9rem;
+            }
+            
+            .calendar-separator {
+                font-size: 1.2rem;
+                margin: 0 2px;
+            }
+            
+            .conversion-card {
+                min-width: 100%;
+            }
+            
+            .time-breakdown-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .breakdown-value {
+                font-size: 1.8rem;
+            }
+            
+            .remaining-time-conversion {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes pulse {
+            0% { opacity: 0.7; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); }
+            50% { opacity: 1; box-shadow: 0 8px 20px rgba(0, 173, 181, 0.4); }
+            100% { opacity: 0.7; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- 第一屏：输入部分 -->
+    <div id="input-screen">
+        <div class="container">
+            <h1>人生倒计时</h1>
+            <p class="tagline">时间是我们最珍贵的资源，也是我们最常浪费的东西。通过可视化生命剩余时间，唤醒对当下的珍视。</p>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <div class="input-field">
+                        <label for="current-age"><i class="fas fa-user"></i> 当前年龄</label>
+                        <input type="number" id="current-age" min="1" max="120" value="35" placeholder="请输入您的年龄">
+                        <div class="input-note">请输入1-120之间的整数</div>
+                    </div>
+                    
+                    <div class="input-field">
+                        <label for="target-age"><i class="fas fa-bullseye"></i> 目标年龄</label>
+                        <input type="number" id="target-age" min="1" max="150" value="80" placeholder="请输入您的目标年龄">
+                        <div class="input-note">根据世界卫生组织数据，中国平均寿命为77.3岁</div>
+                    </div>
+                    
+                    <button class="start-btn pulse" id="start-btn">
+                        <i class="fas fa-hourglass-start"></i> 开始我的生命倒计时
+                    </button>
+                </div>
+            </div>
+            
+            <p class="tagline" style="margin-top: 40px; font-size: 0.95rem; max-width: 600px;">
+                时间如沙，逝去无声。每一秒的流逝都不可逆转，珍惜当下每一刻。
+            </p>
+        </div>
+    </div>
+    
+    <!-- 第二屏：结果部分 -->
+    <div id="result-screen">
+        <div class="container">
+            <header>
+                <h1>人生倒计时</h1>
+                <p class="tagline" id="result-title">您还有以下时间来完成梦想、陪伴所爱之人、探索世界...</p>
+            </header>
+            
+            <!-- 合并的生命总体进度和台历倒计时 -->
+            <div class="combined-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    生命总体进度
+                </h2>
+                <div class="life-progress-container">
+                    <div class="progress-stats">
+                        <div class="progress-age" id="current-age-display">0岁</div>
+                        <div class="progress-percent" id="life-progress-percent">0%</div>
+                        <div class="progress-age" id="target-age-display">0岁</div>
+                    </div>
+                    <div class="progress-bar-large">
+                        <div class="progress-fill-large" id="life-progress"></div>
+                    </div>
+                    <div class="progress-labels">
+                        <div>生命起点 (0岁)</div>
+                        <div>当前进度</div>
+                        <div>目标寿命</div>
+                    </div>
+                </div>
+                
+                <h2 class="section-title" style="margin-top: 50px;">
+                    <i class="fas fa-calendar-alt"></i>
+                    剩余时间倒计时
+                </h2>
+                
+                <!-- 台历卡片 -->
+                <div class="calendar-cards">
+                    <div class="calendar-card">
+                        <div class="calendar-value" id="years-left">0</div>
+                        <div class="calendar-label">年</div>
+                    </div>
+                    
+                    <div class="calendar-separator">,</div>
+                    
+                    <div class="calendar-card">
+                        <div class="calendar-value" id="months-left">0</div>
+                        <div class="calendar-label">月</div>
+                    </div>
+                    
+                    <div class="calendar-separator">,</div>
+                    
+                    <div class="calendar-card">
+                        <div class="calendar-value" id="days-left">0</div>
+                        <div class="calendar-label">天</div>
+                    </div>
+                    
+                    <div class="calendar-separator">,</div>
+                    
+                    <div class="calendar-card">
+                        <div class="calendar-value" id="hours-left">0</div>
+                        <div class="calendar-label">小时</div>
+                    </div>
+                    
+                    <div class="calendar-separator">,</div>
+                    
+                    <div class="calendar-card">
+                        <div class="calendar-value" id="minutes-left">0</div>
+                        <div class="calendar-label">分钟</div>
+                    </div>
+                    
+                    <div class="calendar-separator">,</div>
+                    
+                    <div class="calendar-card seconds-card">
+                        <div class="calendar-value" id="seconds-left">0</div>
+                        <div class="calendar-label">秒</div>
+                    </div>
+                </div>
+                
+                <!-- 剩余时间换算 -->
+                <h2 class="section-title" style="margin-top: 60px;">
+                    <i class="fas fa-calculator"></i>
+                    剩余时间换算
+                </h2>
+                
+                <div class="remaining-time-conversion">
+                    <div class="conversion-card">
+                        <div class="conversion-value" id="total-years-left">0</div>
+                        <div class="conversion-label">剩余总年数</div>
+                        <div class="conversion-subtitle">从现在到目标年龄</div>
+                    </div>
+                    
+                    <div class="conversion-card">
+                        <div class="conversion-value" id="total-months-left">0</div>
+                        <div class="conversion-label">剩余总月数</div>
+                        <div class="conversion-subtitle">从现在到目标年龄</div>
+                    </div>
+                    
+                    <div class="conversion-card">
+                        <div class="conversion-value" id="total-days-left">0</div>
+                        <div class="conversion-label">剩余总天数</div>
+                        <div class="conversion-subtitle">从现在到目标年龄</div>
+                    </div>
+                </div>
+                
+                <div class="warning-box">
+                    <p style="color: var(--text-light); font-size: 0.95rem;">
+                        <i class="fas fa-exclamation-circle"></i> 
+                        <strong>重要说明：</strong> 此计算仅为基于统计数据的估算，目的是帮助您可视化时间概念。生命充满不确定性，请专注于当下，积极生活。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 扩展的时间分解部分（个人时间） -->
+            <div class="time-breakdown-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    个人时间分解
+                </h2>
+                <p style="color: var(--text-dim); margin-bottom: 15px; text-align: center;">您的剩余个人时间可以分解为以下更直观的单位：</p>
+                
+                <div class="time-breakdown-grid" id="time-breakdown-container">
+                    <!-- 个人时间分解卡片将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 行动建议部分（通用建议） -->
+            <div class="action-section">
+                <h2 class="section-title">
+                    <i class="fas fa-rocket"></i>
+                    今天可以做什么？
+                </h2>
+                
+                <div class="action-quote">
+                    "我们无法增加生命的长度，但可以拓展它的宽度。每一天都是你余生的第一天。"
+                </div>
+                
+                <p style="color: var(--text-dim); margin-bottom: 20px;">基于你的剩余时间，以下行动可以帮助你更充实地度过每一天：</p>
+                
+                <div class="action-cards">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h3 class="action-title">阅读一本书</h3>
+                        <p class="action-desc">以你的阅读速度，余生还可以阅读约<span id="books-left">0</span>本书。今天就开始第一本吧。</p>
+                        <a href="#" class="action-btn">选择书籍</a>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-hiking"></i>
+                        </div>
+                        <h3 class="action-title">体验新事物</h3>
+                        <p class="action-desc">你还有约<span id="weekends-left-action">0</span>个周末。计划一次短途旅行或尝试一项新爱好。</p>
+                        <a href="#" class="action-btn">寻找灵感</a>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3 class="action-title">联系所爱的人</h3>
+                        <p class="action-desc">如果每周联系一位亲友，你还有约<span id="contacts-left">0</span>次机会。今天联系一位吧。</p>
+                        <a href="#" class="action-btn">发送消息</a>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <h3 class="action-title">开始推迟的项目</h3>
+                        <p class="action-desc">那个你一直想做的项目，如果现在开始，你还有<span id="project-days-left">0</span>天来完成它。</p>
+                        <a href="#" class="action-btn">制定计划</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 新增：亲情陪伴输入部分 -->
+            <div class="action-section" id="family-input-section">
+                <h2 class="section-title">
+                    <i class="fas fa-heart"></i>
+                    亲情陪伴
+                </h2>
+                
+                <div class="action-quote">
+                    "家人是我们生命中最重要的礼物。不要等到失去后才懂得珍惜，今天就行动起来。"
+                </div>
+                
+                <p style="color: var(--text-dim); margin-bottom: 20px;">输入您的家庭信息，查看与亲人共度的剩余珍贵时光：</p>
+                
+                <div class="input-group">
+                    <div class="input-field">
+                        <label for="child-age-second"><i class="fas fa-child"></i> 孩子年龄（最大）</label>
+                        <input type="number" id="child-age-second" min="0" max="50" placeholder="如无子女请留空或填0">
+                        <div class="input-note">请输入最大孩子的年龄（如有多个），无子女请留空</div>
+                    </div>
+                    
+                    <div class="input-field">
+                        <label for="parent-age-second"><i class="fas fa-user-friends"></i> 父母年龄（较年轻）</label>
+                        <input type="number" id="parent-age-second" min="40" max="120" placeholder="如父母已故请留空或填0">
+                        <div class="input-note">请输入较年轻父母的当前年龄</div>
+                    </div>
+                    
+                    <div class="input-field">
+                        <label for="partner-age-second"><i class="fas fa-heart"></i> 伴侣年龄</label>
+                        <input type="number" id="partner-age-second" min="18" max="120" placeholder="如无伴侣请留空或填0">
+                        <div class="input-note">请输入伴侣的当前年龄</div>
+                    </div>
+                    
+                    <div class="input-field">
+                        <label><i class="fas fa-sliders-h"></i> 亲情设置</label>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.9rem; color: var(--text-dim); display: block; margin-bottom: 5px;">探望父母频率</label>
+                                <select id="visit-frequency-second" style="width: 100%; padding: 10px; background-color: rgba(255,255,255,0.08); border: 1px solid var(--accent-blue); border-radius: 5px; color: var(--text-light); font-family: 'Noto Sans SC', sans-serif;">
+                                    <option value="12">每月一次</option>
+                                    <option value="4" selected>每季度一次</option>
+                                    <option value="2">半年一次</option>
+                                    <option value="1">每年一次</option>
+                                </select>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.9rem; color: var(--text-dim); display: block; margin-bottom: 5px;">父母预期寿命</label>
+                                <select id="parent-life-expectancy-second" style="width: 100%; padding: 10px; background-color: rgba(255,255,255,0.08); border: 1px solid var(--accent-blue); border-radius: 5px; color: var(--text-light); font-family: 'Noto Sans SC', sans-serif;">
+                                    <option value="85" selected>85岁</option>
+                                    <option value="90">90岁</option>
+                                    <option value="95">95岁</option>
+                                    <option value="100">100岁</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="calculate-family-btn pulse" id="calculate-family-btn">
+                        <i class="fas fa-calculator"></i> 计算亲情时间
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 新增：亲情陪伴结果显示部分 -->
+            <div class="family-section" id="family-section" style="display: none;">
+                <div class="combined-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-heart"></i>
+                        亲情陪伴时间
+                    </h2>
+                    
+                    <p style="color: var(--text-dim); margin-bottom: 25px; text-align: center; max-width: 800px; margin-left: auto; margin-right: auto;">
+                        <i class="fas fa-info-circle" style="color: var(--accent-teal);"></i>
+                        基于您输入的家庭信息，以下是您与亲人共度的剩余珍贵时光
+                    </p>
+                    
+                    <!-- 亲情陪伴时间分解 -->
+                    <div class="time-breakdown-grid" id="family-breakdown-container">
+                        <!-- 家庭时间分解卡片将通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <!-- 亲情建议 -->
+                    <div class="action-section" style="margin-top: 40px;">
+                        <h2 class="section-title">
+                            <i class="fas fa-hand-holding-heart"></i>
+                            亲情行动建议
+                        </h2>
+                        
+                        <div class="action-cards" id="family-actions-container">
+                            <!-- 家庭行动建议卡片将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 重置按钮部分 -->
+            <div class="reset-section">
+                <button class="reset-btn" id="reset-btn">
+                    <i class="fas fa-redo"></i> 重新设置年龄参数
+                </button>
+            </div>
+            
+            <footer>
+                <p class="footer-note">
+                    <span class="highlight">人生倒计时</span> 不是一个关于恐惧的工具，而是一个关于觉醒的工具。它不是要告诉你时间所剩无几，而是要提醒你时间无比珍贵。
+                </p>
+                <p>© 2023 人生倒计时可视化项目 | 设计灵感源于对生命意义的思考</p>
+                <p style="margin-top: 20px; font-size: 0.8rem;">
+                    <i class="fas fa-info-circle"></i> 数据仅供参考，实际寿命受遗传、生活方式、环境等多因素影响
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentAge = 35;
+        let targetAge = 80;
+        let totalSecondsLeft = 0;
+        let lastSecondsValue = 0;
+        let timeUpdateInterval;
+        
+        // 家庭信息变量
+        let childAge = null;
+        let parentAge = null;
+        let partnerAge = null;
+        let visitFrequency = 4; // 每季度一次
+        let parentLifeExpectancy = 85;
+        
+        // DOM 元素
+        const inputScreen = document.getElementById('input-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const currentAgeInput = document.getElementById('current-age');
+        const targetAgeInput = document.getElementById('target-age');
+        const secondsCard = document.getElementById('seconds-left');
+        const timeBreakdownContainer = document.getElementById('time-breakdown-container');
+        const resultTitle = document.getElementById('result-title');
+        const familySection = document.getElementById('family-section');
+        const familyBreakdownContainer = document.getElementById('family-breakdown-container');
+        const familyActionsContainer = document.getElementById('family-actions-container');
+        const calculateFamilyBtn = document.getElementById('calculate-family-btn');
+        
+        // 个人时间分解指标定义（已删除"剩余家庭聚餐"）
+        const breakdownMetrics = [
+            {
+                id: 'birthdays-left',
+                icon: 'fas fa-birthday-cake',
+                label: '剩余生日庆祝',
+                desc: '还能庆祝多少次生日',
+                calculate: (totalSeconds) => {
+                    const yearsLeft = totalSeconds / (365.25 * 24 * 60 * 60);
+                    return Math.floor(yearsLeft);
+                }
+            },
+            {
+                id: 'weekends-left',
+                icon: 'fas fa-bed',
+                label: '剩余周末',
+                desc: '假设每周休息2天',
+                calculate: (totalSeconds) => {
+                    const weeksLeft = totalSeconds / (7 * 24 * 60 * 60);
+                    return Math.floor(weeksLeft * 2);
+                }
+            },
+            {
+                id: 'sunsets-left',
+                icon: 'fas fa-sun',
+                label: '剩余日落次数',
+                desc: '还能欣赏多少次日落',
+                calculate: (totalSeconds) => {
+                    const daysLeft = totalSeconds / (24 * 60 * 60);
+                    return Math.floor(daysLeft);
+                }
+            },
+            {
+                id: 'meals-left',
+                icon: 'fas fa-utensils',
+                label: '剩余用餐次数',
+                desc: '假设每日3餐',
+                calculate: (totalSeconds) => {
+                    const daysLeft = totalSeconds / (24 * 60 * 60);
+                    return Math.floor(daysLeft * 3);
+                }
+            },
+            {
+                id: 'breaths-left',
+                icon: 'fas fa-wind',
+                label: '剩余呼吸次数',
+                desc: '假设呼吸频率15次/分钟',
+                calculate: (totalSeconds) => {
+                    return Math.floor(totalSeconds * 0.25); // 15次/分钟 = 0.25次/秒
+                }
+            },
+            {
+                id: 'heartbeats-left',
+                icon: 'fas fa-heartbeat',
+                label: '剩余心跳次数',
+                desc: '假设心率72次/分钟',
+                calculate: (totalSeconds) => {
+                    return Math.floor(totalSeconds * 1.2); // 72次/分钟 = 1.2次/秒
+                }
+            }
+        ];
+        
+        // 亲情时间分解指标定义（已删除"学校活动"、"二人世界周末"、"三代同堂节日"）
+        const familyBreakdownMetrics = [
+            // 孩子相关指标
+            {
+                id: 'bedtime-stories-left',
+                icon: 'fas fa-book-reader',
+                label: '睡前故事',
+                desc: '每晚一个故事，直到孩子12岁',
+                category: 'child',
+                calculate: function() {
+                    if (!childAge || childAge >= 12) return 0;
+                    const remainingYearsUntil12 = Math.max(0, 12 - childAge);
+                    const daysLeft = Math.min(remainingYearsUntil12 * 365.25, totalSecondsLeft/(24*60*60));
+                    return Math.floor(daysLeft);
+                },
+                tip: '睡前故事是培养亲子关系的最佳时机'
+            },
+            {
+                id: 'carry-child-days-left',
+                icon: 'fas fa-child',
+                label: '还能抱孩子',
+                desc: '孩子长大前能轻松抱起的日子',
+                category: 'child',
+                calculate: function() {
+                    if (!childAge || childAge >= 8) return 0;
+                    const remainingYearsUntil8 = Math.max(0, 8 - childAge);
+                    const daysLeft = Math.min(remainingYearsUntil8 * 365.25, totalSecondsLeft/(24*60*60));
+                    return Math.floor(daysLeft);
+                },
+                tip: '孩子很快会长大，珍惜现在能抱起他们的每一天'
+            },
+            // 父母相关指标
+            {
+                id: 'parent-visits-left',
+                icon: 'fas fa-home-heart',
+                label: '探望父母',
+                desc: function() {
+                    const months = 12/visitFrequency;
+                    return `每${months}个月探望一次`;
+                },
+                category: 'parent',
+                calculate: function() {
+                    if (!parentAge || parentAge >= parentLifeExpectancy) return 0;
+                    const parentYearsLeft = parentLifeExpectancy - parentAge;
+                    const yearsToVisit = Math.min(parentYearsLeft, totalSecondsLeft/(365.25*24*60*60));
+                    return Math.max(0, Math.floor(yearsToVisit * visitFrequency));
+                },
+                tip: '父母在，人生尚有来处；父母去，人生只剩归途'
+            },
+            {
+                id: 'meals-with-parents-left',
+                icon: 'fas fa-utensils',
+                label: '与父母共餐',
+                desc: '每周一次家庭聚餐',
+                category: 'parent',
+                calculate: function() {
+                    if (!parentAge || parentAge >= parentLifeExpectancy) return 0;
+                    const parentYearsLeft = parentLifeExpectancy - parentAge;
+                    const weeksToDine = Math.min(parentYearsLeft * 52, totalSecondsLeft/(7*24*60*60));
+                    return Math.max(0, Math.floor(weeksToDine));
+                },
+                tip: '陪伴父母吃饭是最简单却最珍贵的孝心'
+            },
+            {
+                id: 'parent-stories-left',
+                icon: 'fas fa-history',
+                label: '听父母往事',
+                desc: '每个团聚夜晚听一个故事',
+                category: 'parent',
+                calculate: function() {
+                    if (!parentAge || parentAge >= parentLifeExpectancy) return 0;
+                    const parentYearsLeft = parentLifeExpectancy - parentAge;
+                    const yearsToVisit = Math.min(parentYearsLeft, totalSecondsLeft/(365.25*24*60*60));
+                    const visitsLeft = Math.max(0, Math.floor(yearsToVisit * visitFrequency));
+                    return Math.floor(visitsLeft * 3); // 假设每次探望有3个晚上
+                },
+                tip: '父母的故事是家庭最宝贵的传承'
+            },
+            // 伴侣相关指标
+            {
+                id: 'sunsets-with-lover-left',
+                icon: 'fas fa-sun',
+                label: '共赏日落',
+                desc: '每周一次浪漫日落时光',
+                category: 'partner',
+                calculate: function() {
+                    if (!partnerAge) return 0;
+                    const weeksLeft = totalSecondsLeft / (7 * 24 * 60 * 60);
+                    return Math.floor(weeksLeft);
+                },
+                tip: '简单的浪漫往往最动人'
+            },
+            {
+                id: 'handholding-walks-left',
+                icon: 'fas fa-hands-holding',
+                label: '牵手散步',
+                desc: '假设每周散步2次，直到70岁',
+                category: 'partner',
+                calculate: function() {
+                    if (!partnerAge) return 0;
+                    const yearsUntil70Partner = 70 - partnerAge;
+                    const yearsLeft = Math.min(yearsUntil70Partner, totalSecondsLeft/(365.25*24*60*60));
+                    return Math.max(0, Math.floor(yearsLeft * 52 * 2));
+                },
+                tip: '执子之手，与子偕老'
+            },
+            // 家庭整体指标
+            {
+                id: 'family-trips-left',
+                icon: 'fas fa-car-side',
+                label: '全家旅行',
+                desc: '每年一次家庭旅行',
+                category: 'family',
+                requires: ['child', 'parent'],
+                calculate: function() {
+                    // 需要孩子或父母信息
+                    if (!childAge && !parentAge) return 0;
+                    
+                    // 考虑孩子独立时间或父母健康时间
+                    let limitingYears = Infinity;
+                    
+                    if (childAge && childAge < 18) {
+                        const childYearsUntil18 = 18 - childAge;
+                        limitingYears = Math.min(limitingYears, childYearsUntil18);
+                    }
+                    
+                    if (parentAge && parentAge < parentLifeExpectancy) {
+                        const parentYearsLeft = parentLifeExpectancy - parentAge;
+                        limitingYears = Math.min(limitingYears, parentYearsLeft);
+                    }
+                    
+                    const yearsLeft = Math.min(limitingYears, totalSecondsLeft/(365.25*24*60*60));
+                    return Math.max(0, Math.floor(yearsLeft));
+                },
+                tip: '家庭旅行创造的是无法替代的回忆'
+            },
+            {
+                id: 'family-photos-left',
+                icon: 'fas fa-camera',
+                label: '全家福机会',
+                desc: '每年拍摄一张全家福',
+                category: 'family',
+                requires: ['child', 'parent'],
+                calculate: function() {
+                    // 需要孩子或父母信息
+                    if (!childAge && !parentAge) return 0;
+                    
+                    let limitingYears = Infinity;
+                    
+                    if (childAge && childAge < 18) {
+                        const childYearsUntil18 = 18 - childAge;
+                        limitingYears = Math.min(limitingYears, childYearsUntil18);
+                    }
+                    
+                    if (parentAge && parentAge < parentLifeExpectancy) {
+                        const parentYearsLeft = parentLifeExpectancy - parentAge;
+                        limitingYears = Math.min(limitingYears, parentYearsLeft);
+                    }
+                    
+                    const yearsLeft = Math.min(limitingYears, totalSecondsLeft/(365.25*24*60*60));
+                    return Math.max(0, Math.floor(yearsLeft));
+                },
+                tip: '全家福记录的是时间的流逝和爱的永恒'
+            }
+        ];
+
+        // 亲情行动建议定义
+        const familyActionSuggestions = [
+            {
+                id: 'child-action',
+                icon: 'fas fa-child',
+                title: '陪伴孩子成长',
+                desc: function() {
+                    if (!childAge) return '';
+                    if (childAge < 6) return `你的孩子正处于幼儿期，这是建立安全感的关键时期。`;
+                    if (childAge < 12) return `你的孩子正处于儿童期，这是培养兴趣和价值观的重要时期。`;
+                    if (childAge < 18) return `你的孩子正处于青春期，需要你的理解和支持。`;
+                    return `即使孩子已成年，你的支持和关心依然重要。`;
+                },
+                buttonText: '制定陪伴计划',
+                requires: 'child'
+            },
+            {
+                id: 'parent-action',
+                icon: 'fas fa-user-friends',
+                title: '孝敬父母',
+                desc: function() {
+                    if (!parentAge) return '';
+                    if (parentAge < 70) return `父母身体尚好，是带他们旅行、体验新事物的好时机。`;
+                    if (parentAge < 80) return `父母需要更多的陪伴和照顾，多回家看看。`;
+                    return `珍惜与父母在一起的每一刻，多倾听他们的故事和需求。`;
+                },
+                buttonText: '安排探望时间',
+                requires: 'parent'
+            },
+            {
+                id: 'partner-action',
+                icon: 'fas fa-heart',
+                title: '经营婚姻',
+                desc: function() {
+                    if (!partnerAge) return '';
+                    const yearsTogether = Math.max(0, Math.min(currentAge - 25, partnerAge - 25));
+                    if (yearsTogether < 10) return `婚姻还处于甜蜜期，继续培养共同兴趣和回忆。`;
+                    if (yearsTogether < 30) return `婚姻进入稳定期，需要更多的理解和包容。`;
+                    return `多年的相守是难得的缘分，继续创造属于你们的浪漫。`;
+                },
+                buttonText: '计划浪漫约会',
+                requires: 'partner'
+            },
+            {
+                id: 'family-action',
+                icon: 'fas fa-home',
+                title: '家庭建设',
+                desc: function() {
+                    const hasChild = childAge !== null;
+                    const hasParent = parentAge !== null;
+                    const hasPartner = partnerAge !== null;
+                    
+                    if (hasChild && hasParent && hasPartner) {
+                        return `你拥有完整的家庭，三代同堂的幸福值得用心经营。`;
+                    } else if (hasChild && hasPartner) {
+                        return `你的核心家庭需要共同的价值观和目标。`;
+                    } else if (hasParent) {
+                        return `多花时间陪伴父母，创造美好的晚年回忆。`;
+                    }
+                    return `家庭是人生最重要的支撑，用心经营每一段家庭关系。`;
+                },
+                buttonText: '组织家庭活动',
+                requires: 'any'
+            }
+        ];
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置开始按钮事件
+            startBtn.addEventListener('click', startCountdown);
+            
+            // 设置重置按钮事件
+            resetBtn.addEventListener('click', resetToInputScreen);
+            
+            // 设置计算亲情时间按钮事件
+            calculateFamilyBtn.addEventListener('click', calculateFamilyTime);
+            
+            // 设置输入框事件
+            currentAgeInput.addEventListener('input', validateInputs);
+            targetAgeInput.addEventListener('input', validateInputs);
+            
+            // 添加blur事件处理，在输入框失去焦点时进行最终验证和调整
+            currentAgeInput.addEventListener('blur', finalizeAgeInput);
+            targetAgeInput.addEventListener('blur', finalizeAgeInput);
+            
+            // 初始化输入验证
+            validateInputs();
+            
+            // 初始化时间分解容器
+            renderBreakdownCards();
+        });
+        
+        // 最终验证和调整年龄输入
+        function finalizeAgeInput() {
+            const currentAgeStr = currentAgeInput.value.trim();
+            const targetAgeStr = targetAgeInput.value.trim();
+            
+            const currentAgeParsed = parseInt(currentAgeStr);
+            const targetAgeParsed = parseInt(targetAgeStr);
+            
+            // 如果输入为空，恢复默认值
+            if (currentAgeStr === '') {
+                currentAgeInput.value = 35;
+            }
+            if (targetAgeStr === '') {
+                targetAgeInput.value = 80;
+            }
+            
+            // 重新解析更新后的值
+            const updatedCurrentAge = parseInt(currentAgeInput.value) || 35;
+            const updatedTargetAge = parseInt(targetAgeInput.value) || 80;
+            
+            // 确保目标年龄大于当前年龄
+            if (updatedTargetAge <= updatedCurrentAge) {
+                targetAgeInput.value = updatedCurrentAge + 1;
+            }
+            
+            // 触发验证更新按钮状态
+            validateInputs();
+        }
+        
+        // 验证输入
+        function validateInputs() {
+            // 获取输入值，允许空值
+            const currentAgeStr = currentAgeInput.value.trim();
+            const targetAgeStr = targetAgeInput.value.trim();
+            
+            // 解析数值，空字符串或无效值返回NaN
+            const currentAgeParsed = parseInt(currentAgeStr);
+            const targetAgeParsed = parseInt(targetAgeStr);
+            
+            // 临时变量用于验证，不立即更新输入框
+            let currentAgeValid = currentAgeParsed;
+            let targetAgeValid = targetAgeParsed;
+            
+            // 如果解析失败，使用默认值进行验证但不更新输入框
+            if (isNaN(currentAgeValid)) {
+                currentAgeValid = 35; // 用于按钮状态验证的默认值
+            }
+            if (isNaN(targetAgeValid)) {
+                targetAgeValid = 80; // 用于按钮状态验证的默认值
+            }
+            
+            // 确保输入值在合理范围内
+            if (currentAgeValid < 1) currentAgeValid = 1;
+            if (currentAgeValid > 120) currentAgeValid = 120;
+            if (targetAgeValid < 1) targetAgeValid = 1;
+            if (targetAgeValid > 150) targetAgeValid = 150;
+            
+            // 只有在值超出范围时才更新输入框
+            if (!isNaN(currentAgeParsed) && (currentAgeParsed < 1 || currentAgeParsed > 120)) {
+                currentAgeInput.value = currentAgeValid;
+            }
+            if (!isNaN(targetAgeParsed) && (targetAgeParsed < 1 || targetAgeParsed > 150)) {
+                targetAgeInput.value = targetAgeValid;
+            }
+            
+            // 更新全局变量用于其他函数
+            currentAge = currentAgeValid;
+            targetAge = targetAgeValid;
+            
+            // 启用或禁用开始按钮
+            if (currentAge >= targetAge) {
+                startBtn.disabled = true;
+                startBtn.style.opacity = "0.6";
+                startBtn.style.cursor = "not-allowed";
+            } else {
+                startBtn.disabled = false;
+                startBtn.style.opacity = "1";
+                startBtn.style.cursor = "pointer";
+            }
+        }
+        
+        // 开始倒计时
+        function startCountdown() {
+            // 获取基本输入值
+            currentAge = parseInt(currentAgeInput.value);
+            targetAge = parseInt(targetAgeInput.value);
+            
+            // 验证基本输入
+            if (currentAge >= targetAge) {
+                alert("目标年龄必须大于当前年龄！");
+                return;
+            }
+            
+            // 隐藏输入屏幕，显示结果屏幕
+            inputScreen.style.display = "none";
+            resultScreen.style.display = "block";
+            
+            // 计算剩余时间并开始更新
+            calculateRemainingTime();
+            startTimeUpdates();
+            
+            // 更新显示
+            updateDisplay();
+        }
+        
+        // 计算剩余时间
+        function calculateRemainingTime() {
+            const yearsLeft = targetAge - currentAge;
+            totalSecondsLeft = yearsLeft * 365.25 * 24 * 60 * 60; // 考虑闰年
+        }
+        
+        // 开始更新时间
+        function startTimeUpdates() {
+            // 清除之前的间隔
+            if (timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+            }
+            
+            // 每秒更新一次
+            timeUpdateInterval = setInterval(() => {
+                if (totalSecondsLeft > 0) {
+                    totalSecondsLeft--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timeUpdateInterval);
+                }
+            }, 1000);
+        }
+        
+        // 渲染时间分解卡片
+        function renderBreakdownCards() {
+            // 清空容器
+            timeBreakdownContainer.innerHTML = '';
+            
+            // 为每个指标创建卡片并添加到容器
+            breakdownMetrics.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'breakdown-card';
+                card.id = metric.id + '-card';
+                
+                card.innerHTML = `
+                    <div class="breakdown-icon">
+                        <i class="${metric.icon}"></i>
+                    </div>
+                    <div class="breakdown-value" id="${metric.id}">0</div>
+                    <div class="breakdown-label">${metric.label}</div>
+                    <div class="breakdown-desc">${metric.desc}</div>
+                `;
+                
+                timeBreakdownContainer.appendChild(card);
+            });
+        }
+        
+        // 更新显示
+        function updateDisplay() {
+            // 计算各个时间单位
+            const yearsLeft = Math.floor(totalSecondsLeft / (365.25 * 24 * 60 * 60));
+            const monthsLeft = Math.floor((totalSecondsLeft % (365.25 * 24 * 60 * 60)) / (30.44 * 24 * 60 * 60));
+            const daysLeft = Math.floor((totalSecondsLeft % (30.44 * 24 * 60 * 60)) / (24 * 60 * 60));
+            const hoursLeft = Math.floor((totalSecondsLeft % (24 * 60 * 60)) / (60 * 60));
+            const minutesLeft = Math.floor((totalSecondsLeft % (60 * 60)) / 60);
+            const secondsLeft = Math.floor(totalSecondsLeft % 60);
+            
+            // 更新台历卡片显示
+            document.getElementById('years-left').textContent = yearsLeft;
+            document.getElementById('months-left').textContent = monthsLeft;
+            document.getElementById('days-left').textContent = daysLeft;
+            document.getElementById('hours-left').textContent = hoursLeft;
+            document.getElementById('minutes-left').textContent = minutesLeft;
+            
+            // 检查秒数是否变化，如果是则添加翻转动画
+            if (secondsLeft !== lastSecondsValue) {
+                secondsCard.classList.add('flipping');
+                setTimeout(() => {
+                    secondsCard.textContent = secondsLeft;
+                    secondsCard.classList.remove('flipping');
+                }, 250);
+                lastSecondsValue = secondsLeft;
+            }
+            
+            // 更新剩余时间换算
+            const totalYearsLeft = targetAge - currentAge;
+            const totalMonthsLeft = Math.floor(totalYearsLeft * 12);
+            const totalDaysLeft = Math.floor(totalYearsLeft * 365.25);
+            
+            document.getElementById('total-years-left').textContent = totalYearsLeft;
+            document.getElementById('total-months-left').textContent = totalMonthsLeft;
+            document.getElementById('total-days-left').textContent = totalDaysLeft;
+            
+            // 计算生命总体进度
+            const lifeProgressPercent = (currentAge / targetAge) * 100;
+            const lifeProgressRounded = Math.round(lifeProgressPercent);
+            
+            // 更新生命总体进度显示
+            document.getElementById('life-progress-percent').textContent = lifeProgressRounded + '%';
+            document.getElementById('current-age-display').textContent = currentAge + '岁';
+            document.getElementById('target-age-display').textContent = targetAge + '岁';
+            document.getElementById('life-progress').style.width = lifeProgressPercent + '%';
+            
+            // 更新个人时间分解指标
+            updatePersonalBreakdownMetrics();
+            
+            // 更新行动建议中的数字
+            const totalDaysLeftForActions = totalSecondsLeft / (24 * 60 * 60);
+            const totalWeeksLeft = totalDaysLeftForActions / 7;
+            
+            document.getElementById('books-left').textContent = Math.floor(totalDaysLeftForActions / 7);
+            document.getElementById('weekends-left-action').textContent = Math.floor(totalWeeksLeft * 2);
+            document.getElementById('contacts-left').textContent = Math.floor(totalWeeksLeft);
+            document.getElementById('project-days-left').textContent = Math.floor(totalDaysLeftForActions);
+        }
+        
+        // 更新个人时间分解指标
+        function updatePersonalBreakdownMetrics() {
+            // 计算原有指标的值（个人时间）
+            const originalMetricsWithValues = breakdownMetrics.map(metric => {
+                const value = metric.calculate(totalSecondsLeft);
+                return {
+                    ...metric,
+                    value: value,
+                    formattedValue: formatBreakdownValue(value)
+                };
+            });
+            
+            // 按值从小到大排序
+            originalMetricsWithValues.sort((a, b) => a.value - b.value);
+            
+            // 清空容器并重新添加排序后的卡片
+            timeBreakdownContainer.innerHTML = '';
+            
+            // 添加所有个人指标卡片
+            originalMetricsWithValues.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'breakdown-card';
+                
+                card.innerHTML = `
+                    <div class="breakdown-icon">
+                        <i class="${metric.icon}"></i>
+                    </div>
+                    <div class="breakdown-value">${metric.formattedValue}</div>
+                    <div class="breakdown-label">${metric.label}</div>
+                    <div class="breakdown-desc">${metric.desc}</div>
+                `;
+                
+                timeBreakdownContainer.appendChild(card);
+            });
+        }
+        
+        // 计算亲情时间
+        function calculateFamilyTime() {
+            // 获取家庭信息输入
+            const childAgeInput = document.getElementById('child-age-second');
+            const parentAgeInput = document.getElementById('parent-age-second');
+            const partnerAgeInput = document.getElementById('partner-age-second');
+            const visitFrequencySelect = document.getElementById('visit-frequency-second');
+            const parentLifeExpectancySelect = document.getElementById('parent-life-expectancy-second');
+            
+            // 设置家庭信息变量
+            childAge = childAgeInput && childAgeInput.value ? parseInt(childAgeInput.value) : null;
+            parentAge = parentAgeInput && parentAgeInput.value ? parseInt(parentAgeInput.value) : null;
+            partnerAge = partnerAgeInput && partnerAgeInput.value ? parseInt(partnerAgeInput.value) : null;
+            
+            // 验证家庭信息输入
+            if (childAge !== null && (childAge < 0 || childAge > 50)) {
+                alert("孩子年龄应在0-50岁之间");
+                return;
+            }
+            
+            if (parentAge !== null && (parentAge < 40 || parentAge > 120)) {
+                alert("父母年龄应在40-120岁之间");
+                return;
+            }
+            
+            if (partnerAge !== null && (partnerAge < 18 || partnerAge > 120)) {
+                alert("伴侣年龄应在18-120岁之间");
+                return;
+            }
+            
+            // 设置亲情设置
+            if (visitFrequencySelect) visitFrequency = parseInt(visitFrequencySelect.value);
+            if (parentLifeExpectancySelect) parentLifeExpectancy = parseInt(parentLifeExpectancySelect.value);
+            
+            // 显示亲情模块
+            updateFamilySection();
+            
+            // 滚动到亲情模块
+            familySection.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 更新亲情模块
+        function updateFamilySection() {
+            // 检查是否有家庭信息输入
+            const hasFamilyInfo = childAge !== null || parentAge !== null || partnerAge !== null;
+            
+            if (hasFamilyInfo) {
+                // 显示亲情模块
+                familySection.style.display = 'block';
+                
+                // 更新亲情时间分解卡片
+                updateFamilyBreakdownCards();
+                
+                // 更新亲情行动建议
+                updateFamilyActionSuggestions();
+            } else {
+                // 隐藏亲情模块
+                familySection.style.display = 'none';
+            }
+        }
+        
+        // 更新亲情时间分解卡片
+        function updateFamilyBreakdownCards() {
+            // 清空容器
+            familyBreakdownContainer.innerHTML = '';
+            
+            // 筛选符合条件的亲情指标
+            const validFamilyMetrics = familyBreakdownMetrics.filter(metric => {
+                // 检查指标要求
+                if (metric.requires) {
+                    if (Array.isArray(metric.requires)) {
+                        return metric.requires.every(req => {
+                            if (req === 'child') return childAge !== null;
+                            if (req === 'parent') return parentAge !== null;
+                            return false;
+                        });
+                    }
+                }
+                
+                // 检查分类要求
+                if (metric.category === 'child') return childAge !== null;
+                if (metric.category === 'parent') return parentAge !== null;
+                if (metric.category === 'partner') return partnerAge !== null;
+                if (metric.category === 'family') {
+                    return (childAge !== null || parentAge !== null) && 
+                           (childAge !== null || partnerAge !== null);
+                }
+                return true;
+            });
+            
+            // 计算每个指标的值
+            const familyMetricsWithValues = validFamilyMetrics.map(metric => {
+                const value = metric.calculate();
+                const desc = typeof metric.desc === 'function' ? metric.desc() : metric.desc;
+                return {
+                    ...metric,
+                    value: value,
+                    formattedValue: formatBreakdownValue(value),
+                    desc: desc,
+                    tip: metric.tip || ''
+                };
+            });
+            
+            // 按值从小到大排序
+            familyMetricsWithValues.sort((a, b) => a.value - b.value);
+            
+            // 如果没有符合条件的家庭指标，显示提示信息
+            if (familyMetricsWithValues.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'family-empty-state';
+                emptyState.innerHTML = `
+                    <div class="family-empty-state-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 style="color: var(--accent-teal); margin-bottom: 10px;">暂无亲情时间数据</h3>
+                    <p style="color: var(--text-dim); max-width: 500px; margin: 0 auto;">
+                        您输入的家庭信息可能不完整或已超出相关年龄范围，无法计算亲情陪伴时间。
+                    </p>
+                `;
+                familyBreakdownContainer.appendChild(emptyState);
+                return;
+            }
+            
+            // 添加所有家庭指标卡片
+            familyMetricsWithValues.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'breakdown-card family-breakdown-card';
+                
+                card.innerHTML = `
+                    <div class="breakdown-icon">
+                        <i class="${metric.icon}"></i>
+                    </div>
+                    <div class="breakdown-value">${metric.formattedValue}</div>
+                    <div class="breakdown-label">${metric.label}</div>
+                    <div class="breakdown-desc">${metric.desc}</div>
+                    ${metric.tip ? `<div class="breakdown-tip" style="margin-top: 10px; padding: 8px; background-color: rgba(0, 173, 181, 0.1); border-radius: 5px; font-size: 0.8rem; color: var(--accent-teal);">${metric.tip}</div>` : ''}
+                `;
+                
+                familyBreakdownContainer.appendChild(card);
+            });
+        }
+        
+        // 更新亲情行动建议
+        function updateFamilyActionSuggestions() {
+            // 清空容器
+            familyActionsContainer.innerHTML = '';
+            
+            // 筛选符合条件的行动建议
+            const validFamilyActions = familyActionSuggestions.filter(action => {
+                if (action.requires === 'any') return true;
+                if (action.requires === 'child') return childAge !== null;
+                if (action.requires === 'parent') return parentAge !== null;
+                if (action.requires === 'partner') return partnerAge !== null;
+                return false;
+            });
+            
+            // 添加家庭行动建议卡片
+            validFamilyActions.forEach(action => {
+                const actionDesc = typeof action.desc === 'function' ? action.desc() : action.desc;
+                
+                const actionCard = document.createElement('div');
+                actionCard.className = 'action-card family-action-card';
+                
+                actionCard.innerHTML = `
+                    <div class="action-icon">
+                        <i class="${action.icon}"></i>
+                    </div>
+                    <h3 class="action-title">${action.title}</h3>
+                    <p class="action-desc">${actionDesc}</p>
+                    <a href="#" class="action-btn">${action.buttonText}</a>
+                `;
+                
+                familyActionsContainer.appendChild(actionCard);
+            });
+        }
+        
+        // 格式化时间分解值
+        function formatBreakdownValue(num) {
+            if (num >= 1000000000) {
+                return (num / 1000000000).toFixed(1) + 'B';
+            } else if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+        
+        // 重置到输入屏幕
+        function resetToInputScreen() {
+            // 停止所有计时器
+            if (timeUpdateInterval) {
+                clearInterval(timeUpdateInterval);
+            }
+            
+            // 重置家庭信息变量
+            childAge = null;
+            parentAge = null;
+            partnerAge = null;
+            
+            // 重置第二屏的家庭输入
+            document.getElementById('child-age-second').value = '';
+            document.getElementById('parent-age-second').value = '';
+            document.getElementById('partner-age-second').value = '';
+            
+            // 隐藏亲情模块
+            familySection.style.display = 'none';
+            
+            // 显示输入屏幕，隐藏结果屏幕
+            inputScreen.style.display = "flex";
+            resultScreen.style.display = "none";
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
