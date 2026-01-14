@@ -6,6 +6,15 @@
     <title>人生倒计时 - 可视化生命时间</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-K3R3K72F2B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-K3R3K72F2B');
+    </script>
     <style>
         :root {
             --primary-dark: #1a1a2e;
@@ -202,6 +211,13 @@
             font-size: 1.8rem;
         }
         
+        .progress-labels .progress-percent {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-top: -5px; /* 可选：向上微调位置 */
+        }
+        
         .progress-bar-large {
             height: 25px;
             background-color: rgba(255, 255, 255, 0.1);
@@ -246,6 +262,11 @@
             justify-content: space-between;
             font-size: 0.9rem;
             color: var(--text-dim);
+        }
+        
+        .progress-age-label {
+            color: var(--text-light);
+            font-weight: 500;
         }
         
         /* 台历卡片 */
@@ -853,17 +874,17 @@
                 </h2>
                 <div class="life-progress-container">
                     <div class="progress-stats">
-                        <div class="progress-age" id="current-age-display">0岁</div>
+                        <div class="progress-empty"></div>
                         <div class="progress-percent" id="life-progress-percent">0%</div>
-                        <div class="progress-age" id="target-age-display">0岁</div>
+                        <div class="progress-empty"></div>
                     </div>
                     <div class="progress-bar-large">
                         <div class="progress-fill-large" id="life-progress"></div>
                     </div>
                     <div class="progress-labels">
-                        <div>生命起点 (0岁)</div>
-                        <div>当前进度</div>
-                        <div>目标寿命</div>
+                        <div>生命起点（0岁）</div>
+                        <div class="progress-age-label" id="current-age-label">0岁</div>
+                        <div>生命寿命（<span id="target-age-label">0</span>岁）</div>
                     </div>
                 </div>
                 
@@ -1673,8 +1694,8 @@
             
             // 更新生命总体进度显示
             document.getElementById('life-progress-percent').textContent = lifeProgressRounded + '%';
-            document.getElementById('current-age-display').textContent = currentAge + '岁';
-            document.getElementById('target-age-display').textContent = targetAge + '岁';
+            document.getElementById('current-age-label').textContent = currentAge + '岁';
+            document.getElementById('target-age-label').textContent = targetAge;
             document.getElementById('life-progress').style.width = lifeProgressPercent + '%';
             
             // 更新个人时间分解指标
