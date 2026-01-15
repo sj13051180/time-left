@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Disallow: /private/
+Disallow: /admin/
+
+Sitemap: https://www.timecanvans.top/sitemap.xml
+
+# 搜索引擎爬虫设置
+Crawl-delay: 2
+
+# 搜索引擎指令
+User-agent: Googlebot
+Allow: /
+Disallow: /private/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /private/
+
+User-agent: Baiduspider
+Allow: /
+Disallow: /private/
+
+User-agent: YandexBot
+Allow: /
+Disallow: /private/
