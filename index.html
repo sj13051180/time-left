@@ -1092,6 +1092,64 @@
                 </div>
             </div>
             
+            <!-- 时间感知挑战模块 -->
+            <div class="action-section" id="time-challenge-module">
+                <h2 class="section-title">
+                    <i class="fas fa-brain"></i>
+                    时间感知挑战
+                </h2>
+                
+                <div class="action-quote">
+                    "时间是我们最珍贵的资源，也是我们最常浪费的东西。测试你对时间的感知能力，看看你的直觉有多准确。"
+                </div>
+                
+                <p style="color: var(--text-dim); margin-bottom: 20px;">选择一个时间段，感受时间的流逝，看看你能多准确地感知时间：</p>
+                
+                <div class="action-cards">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3 class="action-title">快速挑战</h3>
+                        <p class="action-desc">30秒挑战，测试你对短时间的感知能力。</p>
+                        <button class="action-btn start-challenge-btn" data-seconds="30">开始挑战</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <h3 class="action-title">标准挑战</h3>
+                        <p class="action-desc">1分钟挑战，最常用的时间感知测试。</p>
+                        <button class="action-btn start-challenge-btn" data-seconds="60">开始挑战</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-hourglass"></i>
+                        </div>
+                        <h3 class="action-title">中等挑战</h3>
+                        <p class="action-desc">2分钟挑战，测试你对较长时间的感知。</p>
+                        <button class="action-btn start-challenge-btn" data-seconds="120">开始挑战</button>
+                    </div>
+                    
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3 class="action-title">高级挑战</h3>
+                        <p class="action-desc">5分钟挑战，考验你的耐心和时间感知。</p>
+                        <button class="action-btn start-challenge-btn" data-seconds="300">开始挑战</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> 挑战过程中不会有任何时间提示，完全依靠你的直觉
+                    </p>
+                </div>
+            </div>
+            
             <!-- 行动建议部分（通用建议） -->
             <div class="action-section">
                 <h2 class="section-title">
@@ -2936,6 +2994,9 @@
             // 切换到选择页面
             challengeResultScreen.style.display = 'none';
             challengeSelectionScreen.style.display = 'block';
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
         }
         
         // 返回选择页面
@@ -2949,9 +3010,12 @@
             // 退出全屏模式（如果还在全屏）
             exitFullscreen();
             
-            // 隐藏挑战屏幕，显示主页面
+            // 隐藏挑战屏幕，显示第二屏（结果页面）
             timeChallengeScreen.style.display = 'none';
-            document.getElementById('input-screen').style.display = 'flex';
+            document.getElementById('result-screen').style.display = 'block';
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
         }
         
         // 保存挑战结果到历史记录
@@ -3031,44 +3095,39 @@
         document.addEventListener('DOMContentLoaded', function() {
             initTimeChallenge();
             
-            // 添加挑战入口按钮到主页面
-            addChallengeEntryToMain();
+            // 添加从第二屏启动挑战的事件监听器
+            setupSecondScreenChallengeButtons();
         });
         
-        // 添加挑战入口到主页面
-        function addChallengeEntryToMain() {
-            const inputScreen = document.getElementById('input-screen');
-            const challengeEntryHTML = `
-                <div class="challenge-entry">
-                    <button class="challenge-entry-btn" id="challenge-entry-btn">
-                        <i class="fas fa-brain"></i> 时间感知挑战
-                    </button>
-                    <p class="tagline" style="margin-top: 15px; font-size: 0.95rem;">
-                        测试你对时间的感知能力，看看你的直觉有多准确
-                    </p>
-                </div>
-            `;
-            
-            // 在输入屏幕的容器中添加挑战入口
-            const container = inputScreen.querySelector('.container');
-            if (container) {
-                const existingChallengeEntry = container.querySelector('.challenge-entry');
-                if (!existingChallengeEntry) {
-                    container.insertAdjacentHTML('beforeend', challengeEntryHTML);
-                    
-                    // 设置挑战入口按钮事件
-                    document.getElementById('challenge-entry-btn').addEventListener('click', function() {
-                        // 隐藏主页面，显示挑战页面
-                        document.getElementById('input-screen').style.display = 'none';
-                        document.getElementById('result-screen').style.display = 'none';
-                        timeChallengeScreen.style.display = 'block';
-                        challengeSelectionScreen.style.display = 'block';
-                        challengePrepScreen.style.display = 'none';
-                        challengeWaitingScreen.style.display = 'none';
-                        challengeResultScreen.style.display = 'none';
-                    });
+        // 设置第二屏挑战按钮事件
+        function setupSecondScreenChallengeButtons() {
+            // 使用事件委托处理第二屏的挑战按钮点击
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('start-challenge-btn')) {
+                    const seconds = parseInt(e.target.getAttribute('data-seconds'));
+                    startChallengeFromSecondScreen(seconds);
                 }
-            }
+            });
+        }
+        
+        // 从第二屏启动挑战
+        function startChallengeFromSecondScreen(seconds) {
+            // 设置选择的时间
+            challengeSelectedTime = seconds;
+            
+            // 隐藏第二屏，显示挑战屏幕
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('time-challenge-screen').style.display = 'block';
+            
+            // 更新选择的时间显示
+            selectedTimeDisplay.textContent = formatTime(challengeSelectedTime);
+            
+            // 切换到准备页面
+            challengeSelectionScreen.style.display = 'none';
+            challengePrepScreen.style.display = 'block';
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
         }
         
         // 全屏变化事件监听
