@@ -1175,42 +1175,41 @@
                 
                 <p style="color: var(--text-dim); margin-bottom: 20px;">选择一个时间段，感受时间的流逝，看看你能多准确地感知时间：</p>
                 
-                <div class="action-cards">
-                    <div class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-clock"></i>
+                <div class="time-options-container">
+                    <div class="time-options-grid">
+                        <div class="time-option" data-seconds="30">
+                            <div class="time-option-value">30秒</div>
+                            <div class="time-option-label">快速挑战</div>
                         </div>
-                        <h3 class="action-title">快速挑战</h3>
-                        <p class="action-desc">30秒挑战，测试你对短时间的感知能力。</p>
-                        <button class="action-btn start-challenge-btn" data-seconds="30">开始挑战</button>
+                        <div class="time-option" data-seconds="60">
+                            <div class="time-option-value">1分钟</div>
+                            <div class="time-option-label">标准挑战</div>
+                        </div>
+                        <div class="time-option" data-seconds="120">
+                            <div class="time-option-value">2分钟</div>
+                            <div class="time-option-label">中等挑战</div>
+                        </div>
+                        <div class="time-option" data-seconds="300">
+                            <div class="time-option-value">5分钟</div>
+                            <div class="time-option-label">高级挑战</div>
+                        </div>
                     </div>
                     
-                    <div class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-hourglass-half"></i>
+                    <div class="custom-time-section">
+                        <h3 class="section-title" style="font-size: 1.5rem; margin-top: 40px;">
+                            <i class="fas fa-sliders-h"></i>
+                            自定义时间
+                        </h3>
+                        <div class="input-field">
+                            <label for="custom-time-module"><i class="fas fa-hourglass-half"></i> 自定义时间（秒）</label>
+                            <input type="number" id="custom-time-module" min="10" max="600" placeholder="输入10-600秒之间的时间">
+                            <div class="input-note">建议不超过10分钟（600秒）</div>
                         </div>
-                        <h3 class="action-title">标准挑战</h3>
-                        <p class="action-desc">1分钟挑战，最常用的时间感知测试。</p>
-                        <button class="action-btn start-challenge-btn" data-seconds="60">开始挑战</button>
                     </div>
                     
-                    <div class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-hourglass"></i>
-                        </div>
-                        <h3 class="action-title">中等挑战</h3>
-                        <p class="action-desc">2分钟挑战，测试你对较长时间的感知。</p>
-                        <button class="action-btn start-challenge-btn" data-seconds="120">开始挑战</button>
-                    </div>
-                    
-                    <div class="action-card">
-                        <div class="action-icon">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <h3 class="action-title">高级挑战</h3>
-                        <p class="action-desc">5分钟挑战，考验你的耐心和时间感知。</p>
-                        <button class="action-btn start-challenge-btn" data-seconds="300">开始挑战</button>
-                    </div>
+                    <button class="start-btn pulse" id="start-challenge-module-btn">
+                        <i class="fas fa-play"></i> 开始挑战
+                    </button>
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px;">
@@ -3165,6 +3164,7 @@
         // 初始化挑战模块
         document.addEventListener('DOMContentLoaded', function() {
             initTimeChallenge();
+            initTimeChallengeModule();
             
             // 添加从第二屏启动挑战的事件监听器
             setupSecondScreenChallengeButtons();
@@ -3209,14 +3209,85 @@
         
         function handleFullscreenChange() {
             // 如果退出全屏且正在等待页面，自动切换到结果页面
-            if (!document.fullscreenElement && 
-                !document.mozFullScreenElement && 
-                !document.webkitFullscreenElement && 
+            if (!document.fullscreenElement &&
+                !document.mozFullScreenElement &&
+                !document.webkitFullscreenElement &&
                 !document.msFullscreenElement &&
                 challengeWaitingScreen.style.display === 'block') {
                 timeUp();
             }
         }
+        
+        // 初始化第二屏的时间选择模块
+        function initTimeChallengeModule() {
+            // 设置时间选项点击事件
+            document.querySelectorAll('#time-challenge-module .time-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // 移除所有选中状态
+                    document.querySelectorAll('#time-challenge-module .time-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // 添加选中状态
+                    this.classList.add('selected');
+                    
+                    // 更新选择的时间
+                    challengeSelectedTime = parseInt(this.getAttribute('data-seconds'));
+                    
+                    // 更新自定义时间输入框
+                    document.getElementById('custom-time-module').value = challengeSelectedTime;
+                });
+            });
+            
+            // 设置自定义时间输入事件
+            const customTimeInput = document.getElementById('custom-time-module');
+            if (customTimeInput) {
+                customTimeInput.addEventListener('input', function() {
+                    const value = parseInt(this.value);
+                    if (value >= 10 && value <= 600) {
+                        challengeSelectedTime = value;
+                        
+                        // 移除所有时间选项的选中状态
+                        document.querySelectorAll('#time-challenge-module .time-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                    }
+                });
+            }
+            
+            // 设置开始挑战按钮事件
+            const startModuleBtn = document.getElementById('start-challenge-module-btn');
+            if (startModuleBtn) {
+                startModuleBtn.addEventListener('click', function() {
+                    // 验证选择的时间
+                    if (challengeSelectedTime < 10 || challengeSelectedTime > 600) {
+                        alert("请选择10-600秒之间的时间");
+                        return;
+                    }
+                    
+                    // 隐藏第二屏，显示挑战屏幕
+                    document.getElementById('result-screen').style.display = 'none';
+                    document.getElementById('time-challenge-screen').style.display = 'block';
+                    
+                    // 更新选择的时间显示
+                    selectedTimeDisplay.textContent = formatTime(challengeSelectedTime);
+                    
+                    // 切换到准备页面
+                    challengeSelectionScreen.style.display = 'none';
+                    challengePrepScreen.style.display = 'block';
+                    
+                    // 滚动到顶部
+                    window.scrollTo(0, 0);
+                });
+            }
+            
+            // 默认选中1分钟选项
+            const defaultOption = document.querySelector('#time-challenge-module .time-option[data-seconds="60"]');
+            if (defaultOption) {
+                defaultOption.classList.add('selected');
+            }
+        }
+        
     </script>
 </body>
 </html>
